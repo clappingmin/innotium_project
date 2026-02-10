@@ -3,6 +3,10 @@ import cv2
 import numpy as np
 from PIL import Image
 
+if not hasattr(Image, "ANTIALIAS"):
+    Image.ANTIALIAS = Image.Resampling.LANCZOS
+
+
 class OCREngine:
     """EasyOCR 엔진"""
     

@@ -1,6 +1,6 @@
 flask==3.0.0
 flask-cors==4.0.0
 easyocr==1.7.0
-Pillow==9.5.0
-opencv-python==4.8.1.78
+Pillow==12.1.0
+opencv-python-headless==4.13.0.92
 python-dotenv==1.0.0
