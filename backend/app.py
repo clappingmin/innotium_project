@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from pathlib import Path
 import os
 from werkzeug.utils import secure_filename
 from ocr.ocr_engine import OCREngine
@@ -8,13 +9,15 @@ from detector.pii_detector import PIIDetector
 app = Flask(__name__)
 CORS(app)  # React 연결 위해 필수!
 
+
 # 설정
-UPLOAD_FOLDER = 'uploads'
+BASE_DIR = Path(__file__).resolve().parent
+UPLOAD_FOLDER = BASE_DIR / 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB
 
 # OCR, 탐지기 초기화
 ocr_engine = OCREngine()
@@ -64,6 +67,7 @@ def analyze_document():
         # 4. OCR 실행
         print(f"📄 OCR 시작: {filename}")
         extracted_text = ocr_engine.extract_text(filepath)
+
         print(f"✅ 추출된 텍스트: {extracted_text[:100]}...")
         
         # 5. 민감정보 탐지

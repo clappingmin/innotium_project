@@ -1,128 +1,221 @@
+import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Checkbox,
+  TextField,
+  FormControlLabel,
+  Box,
+  IconButton,
+  Typography,
+  Divider,
+} from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import AddIcon from '@mui/icons-material/Add';
 import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Modal from '@mui/material/Modal';
-import Button from '@mui/material/Button';
 import colors from '../styles/colors';
-import { DETECTION_ITEMS } from '../constants/keywordRules';
 
-function SettingModal({ open, onClose }) {
-  // props 받기
+function SettingsModal({ open, onClose }) {
+  // 개인정보 설정
+  const [settings, setSettings] = useState({
+    residentRegistrationNumber: { enabled: false, count: 0, exceptions: '', label: '주민등록번호' },
+    foreignResidentRegistrationNumber: {
+      enabled: false,
+      count: 0,
+      exceptions: '',
+      label: '외국인 주민등록번호',
+    },
+    passportNumber: { enabled: false, count: 0, exceptions: '', label: '여권번호' },
+    driverLicenseNumber: { enabled: false, count: 0, exceptions: '', label: '운전면허번호' },
+    emailAddress: { enabled: false, count: 0, exceptions: '', label: '이메일' },
+    phoneNumber: { enabled: false, count: 0, exceptions: '', label: '전화번호' },
+    mobilePhoneNumber: { enabled: false, count: 0, exceptions: '', label: '휴대전화번호' },
+    businessRegistrationNumber: {
+      enabled: false,
+      count: 0,
+      exceptions: '',
+      label: '사업자등록번호',
+    },
+    corporateRegistrationNumber: {
+      enabled: false,
+      count: 0,
+      exceptions: '',
+      label: '법인등록번호',
+    },
+    creditCardNumber: { enabled: false, count: 0, exceptions: '', label: '신용카드번호' },
+    bankAccountNumber: {
+      enabled: true,
+      count: 0,
+      exceptions: '',
+      label: '계좌번호',
+    },
+  });
+
+  // localStorage에서 불러오기
+  useEffect(() => {
+    const saved = localStorage.getItem('pii_settings');
+    if (saved) {
+      setSettings(JSON.parse(saved));
+    }
+  }, []);
+
+  // 체크박스 토글
+  const handleToggle = (key) => {
+    setSettings({
+      ...settings,
+      [key]: { ...settings[key], enabled: !settings[key].enabled },
+    });
+  };
+
+  // 개수 변경
+  const handleCountChange = (key, value) => {
+    setSettings({
+      ...settings,
+      [key]: { ...settings[key], count: value },
+    });
+  };
+
+  // 예외정보 추가
+  const handleAddException = (key) => {
+    const newException = {
+      value: '',
+      id: Date.now(),
+    };
+    setSettings({
+      ...settings,
+      [key]: {
+        ...settings[key],
+        exceptions: [...settings[key].exceptions, newException],
+      },
+    });
+  };
+
+  // 예외정보 수정
+  const handleExceptionChange = (key, value) => {
+    setSettings({
+      ...settings,
+      [key]: {
+        ...settings[key],
+        exceptions: value,
+      },
+    });
+  };
+
+  // 저장
+  const handleSave = () => {
+    localStorage.setItem('pii_settings', JSON.stringify(settings));
+    onClose();
+  };
+
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      aria-labelledby="modal-modal-title"
-      aria-describedby="modal-modal-description"
-    >
-      <ModalBox>
-        <Header>
-          <HeaderText>개인정보 검출설정</HeaderText>
-          <Button variant="text">x</Button>
-        </Header>
-        <Content>
-          <div className="top-section">
-            <span>개인정보</span>
-            {DETECTION_ITEMS.map((item) => (
-              <RuleRow key={item.key}>
-                <label>
-                  <input type="checkbox" />
-                  {item.label}
-                </label>
-                <input type="text" placeholder="검출개수" />
-                <input type="text" placeholder="예외 정규식" />
-              </RuleRow>
-            ))}
-          </div>
-          <div className="bottom-section">
-            <div className="keyword-control">
-              <span>
-                키워드 <p>: 1 건</p>
-              </span>
-              <button>+</button>
-            </div>
-            <div className="keyword-box"></div>
-          </div>
-        </Content>
-        <ButtonBox>
-          <button>저장</button>
-          <button>닫기</button>
-        </ButtonBox>
-      </ModalBox>
-    </Modal>
+    <StyledDialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+      <DialogTitle backgroundColor={colors.primary}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" p={1}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="h6" color={colors.white}>
+              개인정보 검출설정
+            </Typography>
+          </Box>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <Divider />
+
+      <DialogContent>
+        <Typography variant="subtitle2" color={colors.primary} mb={2}>
+          개인정보
+        </Typography>
+
+        {Object.entries(settings).map(([key, value]) => (
+          <SettingRow key={key}>
+            <FormControlLabel
+              control={<Checkbox checked={value.enabled} onChange={() => handleToggle(key)} />}
+              label={value.label}
+              sx={{ minWidth: 180, color: colors.text }}
+            />
+
+            <CountField
+              size="small"
+              value={value.count}
+              placeholder="검출개수"
+              onChange={(e) => handleCountChange(key, e.target.value)}
+              disabled={!value.enabled}
+              type="number"
+            />
+
+            <Box flex={1}>
+              <TextField
+                size="small"
+                fullWidth
+                placeholder="예외정보식"
+                value={value.exceptions}
+                onChange={(e) => handleExceptionChange(key, e.target.value)}
+                disabled={!value.enabled}
+              />
+            </Box>
+          </SettingRow>
+        ))}
+
+        <Box mt={2} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="caption" color="primary" sx={{ cursor: 'pointer' }}>
+            키워드 : 1건
+          </Typography>
+          <AddButton
+            startIcon={<AddIcon />}
+            size="small"
+            onClick={() => handleAddException('계좌번호')}
+          >
+            추가
+          </AddButton>
+        </Box>
+
+        <Box mt={3} sx={{ border: '1px solid rgba(0,0,0,0.15)', padding: '10px' }}></Box>
+      </DialogContent>
+
+      <Divider />
+
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} variant="outlined">
+          닫기
+        </Button>
+        <Button onClick={handleSave} variant="contained">
+          저장
+        </Button>
+      </DialogActions>
+    </StyledDialog>
   );
 }
 
-const ModalBox = styled(Box)({
-  position: 'absolute',
-  top: '50%',
-  left: '50%',
-  transform: 'translate(-50%, -50%)',
-  width: 680,
-  height: 750,
-  backgroundColor: 'white',
-  borderRadius: '8px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-  overflow: 'hidden',
-  display: 'flex',
-  flexDirection: 'column',
-  //   justifyContent: 'space-between',
-});
-
-const Header = styled(Box)({
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '10px',
-  borderBottom: '1px solid #e0e0e0',
-  backgroundColor: colors.primary,
-});
-
-const HeaderText = styled('span')({
-  color: colors.white,
-  fontSize: '14px',
-});
-
-const Content = styled(Box)({
-  padding: '10px 20px',
-
-  '& > .top-section > span': {
-    color: colors.primary,
-  },
-
-  '& > .bottom-section': {
-    '&>.keyword-control': {
-      display: 'flex',
-      justifyContent: 'space-between',
-
-      span: {},
-      button: {},
-    },
-    '&>.keyword-box': {
-      border: '1px solid rgba(0,0,0,0.15)',
-      padding: '10px 5px',
-      display: 'flex',
-      gap: '10px',
-    },
+// Styled Components
+const StyledDialog = styled(Dialog)({
+  '& .MuiDialog-paper': {
+    borderRadius: 8,
   },
 });
 
-const RuleRow = styled(Box)({
+const SettingRow = styled(Box)({
   display: 'flex',
   alignItems: 'center',
-  gap: '10px',
-
-  '& MuiFormControlLabel-root': {
-    backgroundColor: 'pink',
-    color: colors.textPrimary,
+  gap: 16,
+  marginBottom: 12,
+  '& .MuiFormControlLabel-root': {
+    margin: 0,
   },
 });
 
-const ButtonBox = styled(Box)({
-  marginTop: 'auto',
-  display: 'flex',
-  justifyContent: 'flex-end',
-  padding: '10px',
+const CountField = styled(TextField)({
+  width: 100,
 });
 
-export default SettingModal;
+const AddButton = styled(Button)({
+  marginLeft: 16,
+  textTransform: 'none',
+});
+
+export default SettingsModal;

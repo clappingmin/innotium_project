@@ -44,3 +44,16 @@ export const DETECTION_ITEMS = [
     label: '계좌번호',
   },
 ];
+
+export const DEFAULT_DETECTION_SETTINGS = {
+  residentRegistrationNumber: { enabled: true },
+  foreignResidentRegistrationNumber: { enabled: true },
+  passportNumber: { enabled: true },
+  driverLicenseNumber: { enabled: true },
+  phoneNumber: { enabled: true },
+  mobilePhoneNumber: { enabled: true },
+  bankAccountNumber: { enabled: true },
+  creditCardNumber: { enabled: true },
+  emailAddress: { enabled: true },
+  businessRegistrationNumber: { enabled: true },
+};
