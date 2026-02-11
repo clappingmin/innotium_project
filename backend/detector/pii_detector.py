@@ -17,6 +17,7 @@ class PIIDetector:
             'mobilePhoneNumber': 3,
             'phoneNumber': 4,
             'businessRegistrationNumber': 5,
+            'corporateRegistrationNumber': 5,
             'bankAccountNumber': 6,
             'emailAddress': 7,
         }
@@ -28,6 +29,14 @@ class PIIDetector:
         Args:
             text: OCR로 추출한 텍스트
             settings: 프론트에서 보낸 설정
+                {
+                    'emailAddress': {
+                        'enabled': True,
+                        'count': 3,  # 최대 검출 개수 (0 = 무제한)
+                        'exceptions': '정규식'  # 예외 패턴
+                    },
+                    'keyword': ['검색어1', '검색어2']
+                }
         
         Returns:
             dict: 탐지 결과
@@ -43,12 +52,16 @@ class PIIDetector:
             'passportNumber', 'driverLicenseNumber',
             'mobilePhoneNumber', 'phoneNumber',
             'bankAccountNumber', 'creditCardNumber', 
-            'emailAddress', 'businessRegistrationNumber'
+            'emailAddress', 'businessRegistrationNumber',
+            'corporateRegistrationNumber'
         ]
         
         for pii_type in pii_types:
-            # 설정에서 활성화 여부 확인
-            if not settings.get(pii_type, {}).get('enabled', True):
+            # 설정 가져오기
+            type_setting = settings.get(pii_type, {})
+            
+            # 활성화 여부 확인
+            if not type_setting.get('enabled', True):
                 continue
             
             # 패턴으로 검출
@@ -56,12 +69,36 @@ class PIIDetector:
             if pattern:
                 matches = re.findall(pattern, text)
                 
+                # 예외 패턴 적용
+                exception_pattern = type_setting.get('exceptions', '')
+                filtered_matches = []
+                
                 for match in matches:
                     # 마스킹 데이터 제외
                     if '*' in match:
                         continue
                     
-                    # 후보에 추가
+                    # 예외 패턴 체크
+                    if exception_pattern and self._is_exception(match, exception_pattern):
+                        continue
+                    
+                    filtered_matches.append(match)
+                
+                # 개수 제한 적용
+                max_count = type_setting.get('count', 0)
+                
+                # 문자열이면 숫자로 변환
+                if isinstance(max_count, str):
+                    try:
+                        max_count = int(max_count)
+                    except:
+                        max_count = 0
+
+                if max_count > 0:
+                    filtered_matches = filtered_matches[:max_count]
+                
+                # 후보에 추가
+                for match in filtered_matches:
                     if match not in all_candidates:
                         all_candidates[match] = []
                     all_candidates[match].append(pii_type)
@@ -69,14 +106,29 @@ class PIIDetector:
         # 2단계: 중복 제거 (가장 적합한 타입만 선택)
         detected_items = self._remove_duplicates(all_candidates)
         
-        # 3단계: 마스킹 처리
+        # 3단계: 키워드 검출
+        keywords = settings.get('keyword', [])
+        if keywords:
+            keyword_matches = self._detect_keywords(text, keywords)
+            if keyword_matches:
+                detected_items['keyword'] = keyword_matches
+        
+        # 4단계: 마스킹 처리
         for pii_type, items in detected_items.items():
-            masked = [self._mask(item, pii_type) for item in items]
-            detected_items[pii_type] = {
-                'count': len(items),
-                'items': masked,
-                'raw': items
-            }
+            if pii_type == 'keyword':
+                # 키워드는 마스킹 안 함
+                detected_items[pii_type] = {
+                    'count': len(items),
+                    'items': items,
+                    'raw': items
+                }
+            else:
+                masked = [self._mask(item, pii_type) for item in items]
+                detected_items[pii_type] = {
+                    'count': len(items),
+                    'items': masked,
+                    'raw': items
+                }
         
         total_count = sum(d['count'] for d in detected_items.values())
         
@@ -90,6 +142,68 @@ class PIIDetector:
             'total_count': total_count,
             'detected_items': detected_items
         }
+    
+    def _is_exception(self, text, exception_pattern):
+        """
+        예외 패턴 체크
+        
+        Args:
+            text: 검출된 텍스트
+            exception_pattern: 예외 정규식
+        
+        Returns:
+            True if 예외에 해당, False otherwise
+        """
+        if not exception_pattern:
+            return False
+        
+        try:
+            return bool(re.search(exception_pattern, text))
+        except re.error:
+            # 잘못된 정규식이면 무시
+            return False
+    
+    def _detect_keywords(self, text, keywords):
+        """
+        키워드 검출
+        
+        Args:
+            text: OCR 텍스트
+            keywords: 검색할 키워드 리스트
+                [{'value': '이노티움', 'count': 0}, {'value': '박수민', 'count': 0}]
+        
+        Returns:
+            검출된 키워드 리스트
+        """
+        found = []
+        
+        if not isinstance(keywords, list):
+            return found
+        
+        for keyword_obj in keywords:
+            # 딕셔너리 형태인 경우
+            if isinstance(keyword_obj, dict):
+                keyword = keyword_obj.get('value', '')
+                max_count = keyword_obj.get('count', 0)
+                
+                # 문자열이면 정수로 변환
+                if isinstance(max_count, str):
+                    try:
+                        max_count = int(max_count)
+                    except:
+                        max_count = 0
+                
+                # 키워드가 텍스트에 있는지 확인
+                if keyword and keyword in text:
+                    # count가 0이면 무제한, 아니면 제한
+                    if max_count == 0 or len(found) < max_count:
+                        found.append(keyword)
+            
+            # 문자열 형태인 경우 (하위 호환)
+            elif isinstance(keyword_obj, str) and keyword_obj and keyword_obj in text:
+                found.append(keyword_obj)
+        
+        return found
     
     def _remove_duplicates(self, candidates):
         """
@@ -143,74 +257,74 @@ class PIIDetector:
         # 우선순위 높은 것 선택
         return min(candidates, key=lambda t: self.priority.get(t, 99))
     
+
     def _calculate_confidence(self, number, pii_type):
         """
         번호가 해당 타입에 얼마나 적합한지 점수 계산
-        
-        Args:
-            number: 검출된 번호
-            pii_type: 타입
-        
-        Returns:
-            점수 (높을수록 적합)
         """
-        score = 0
-        clean_number = number.replace('-', '').replace(' ', '')
+        try:
+            score = 0
+            clean_number = number.replace('-', '').replace(' ', '')
+            
+            # 1. 구분자(-) 있으면 형식 정확도 높음 (+50)
+            if '-' in number:
+                score += 50
+            
+            # 2. 길이 정확도
+            length = len(clean_number)
+            
+            if pii_type == 'residentRegistrationNumber':
+                if length == 13:
+                    score += 100
+            
+            elif pii_type == 'foreignResidentRegistrationNumber':
+                if length == 13:
+                    score += 100
+            
+            elif pii_type == 'mobilePhoneNumber':
+                if length == 11 and clean_number.startswith('010'):
+                    score += 100
+                elif length == 10 and clean_number.startswith('01'):
+                    score += 80
+            
+            elif pii_type == 'phoneNumber':
+                if 9 <= length <= 11 and not clean_number.startswith('01'):
+                    score += 70
+            
+            elif pii_type in ['businessRegistrationNumber', 'corporateRegistrationNumber']:
+                if length == 10:
+                    score += 90
+            
+            elif pii_type == 'bankAccountNumber':
+                if 10 <= length <= 14:
+                    score += 60
+            
+            elif pii_type == 'driverLicenseNumber':
+                if length == 12:
+                    score += 90
+            
+            elif pii_type == 'creditCardNumber':
+                if length == 16:
+                    score += 100
+            
+            elif pii_type == 'passportNumber':
+                if length == 9:
+                    score += 100
+            
+            # 3. 시작 패턴 보너스
+            if pii_type == 'mobilePhoneNumber' and clean_number.startswith('010'):
+                score += 20
+            
+            if pii_type == 'phoneNumber' and clean_number.startswith('02'):
+                score += 20
+            
+            return score
         
-        # 1. 구분자(-) 있으면 형식 정확도 높음 (+50)
-        if '-' in number:
-            score += 50
-        
-        # 2. 길이 정확도
-        length = len(clean_number)
-        
-        if pii_type == 'residentRegistrationNumber':
-            if length == 13:
-                score += 100
-        
-        elif pii_type == 'foreignResidentRegistrationNumber':
-            if length == 13:
-                score += 100
-        
-        elif pii_type == 'mobilePhoneNumber':
-            if length == 11 and clean_number.startswith('010'):
-                score += 100
-            elif length == 10 and clean_number.startswith('01'):
-                score += 80
-        
-        elif pii_type == 'phoneNumber':
-            if 9 <= length <= 11 and not clean_number.startswith('01'):
-                score += 70
-        
-        elif pii_type == 'businessRegistrationNumber':
-            if length == 10:
-                score += 90
-        
-        elif pii_type == 'bankAccountNumber':
-            if 10 <= length <= 14:
-                score += 60
-        
-        elif pii_type == 'driverLicenseNumber':
-            if length == 12:
-                score += 90
-        
-        elif pii_type == 'creditCardNumber':
-            if length == 16:
-                score += 100
-        
-        elif pii_type == 'passportNumber':
-            if length == 9:  # 1글자 + 8숫자
-                score += 100
-        
-        # 3. 시작 패턴 보너스
-        if pii_type == 'mobilePhoneNumber' and clean_number.startswith('010'):
-            score += 20
-        
-        if pii_type == 'phoneNumber' and clean_number.startswith('02'):
-            score += 20
-        
-        return score
-    
+        except Exception as e:
+            # 오류 발생 시 기본 점수 반환
+            print(f"⚠️ Confidence 계산 오류: {e}, number={number}, type={pii_type}")
+            return 0
+
     def _mask(self, text, pii_type):
         """민감정보 마스킹"""
         if pii_type in ['residentRegistrationNumber', 'foreignResidentRegistrationNumber']:
@@ -251,7 +365,7 @@ class PIIDetector:
                 return f"{parts[0]}-****-****-{parts[3]}"
             return text
         
-        elif pii_type == 'businessRegistrationNumber':
+        elif pii_type in ['businessRegistrationNumber', 'corporateRegistrationNumber']:
             # 123-45-67890 → 123-**-67890
             if '-' in text:
                 parts = text.split('-')
@@ -300,14 +414,16 @@ class PIIDetector:
     def _get_default_settings(self):
         """기본 설정"""
         return {
-            'residentRegistrationNumber': {'enabled': True},
-            'foreignResidentRegistrationNumber': {'enabled': True},
-            'passportNumber': {'enabled': True},
-            'driverLicenseNumber': {'enabled': True},
-            'phoneNumber': {'enabled': True},
-            'mobilePhoneNumber': {'enabled': True},
-            'bankAccountNumber': {'enabled': True},
-            'creditCardNumber': {'enabled': True},
-            'emailAddress': {'enabled': True},
-            'businessRegistrationNumber': {'enabled': True},
+            'residentRegistrationNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'foreignResidentRegistrationNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'passportNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'driverLicenseNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'phoneNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'mobilePhoneNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'bankAccountNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'creditCardNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'emailAddress': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'businessRegistrationNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'corporateRegistrationNumber': {'enabled': True, 'count': 0, 'exceptions': ''},
+            'keyword': []
         }

@@ -7,6 +7,8 @@ import { DEFAULT_DETECTION_SETTINGS } from '../constants/keywordRules';
  * @returns
  */
 export async function analyzeDocument(file, settings = DEFAULT_DETECTION_SETTINGS) {
+
+
   const formData = new FormData();
   formData.append('file', file);
   formData.append('settings', JSON.stringify(settings));

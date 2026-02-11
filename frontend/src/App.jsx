@@ -6,6 +6,7 @@ import ResultCard from './components/ResultCard';
 import { useState } from 'react';
 import SettingModal from './components/SettingModal';
 import { styled } from '@mui/material';
+import { DEFAULT_DETECTION_SETTINGS } from './constants/keywordRules';
 
 function App() {
   const [openSettings, setOpenSettings] = useState(false);
@@ -20,24 +21,13 @@ function App() {
       setIsAnalyzing(true);
       setResult(null);
 
+
       // localStorage에서 설정 가져오기
-      const settings = JSON.parse(localStorage.getItem('pii-settings') || '{}');
+      const localSettings = localStorage.getItem('pii_settings');
+      const settings = localSettings ? JSON.parse(localSettings) : DEFAULT_DETECTION_SETTINGS;
 
-      // 기본 설정
-      const defaultSettings = {
-        주민등록번호: { enabled: true },
-        외국인등록번호: { enabled: true },
-        여권번호: { enabled: true },
-        운전면허번호: { enabled: true },
-        전화번호: { enabled: true },
-        계좌번호: { enabled: true },
-        신용카드번호: { enabled: true },
-        이메일: { enabled: true },
-        사업자등록번호: { enabled: true },
-        ...settings,
-      };
 
-      const analyzeResult = await analyzeDocument(file, defaultSettings);
+      const analyzeResult = await analyzeDocument(file, settings);
 
       console.log('분석 결과:', analyzeResult);
       setResult(analyzeResult);

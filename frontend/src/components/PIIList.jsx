@@ -1,33 +1,22 @@
-import { styled } from '@mui/material/styles';
-import { Box, Accordion } from '@mui/material';
-import AccordionSummary from '@mui/material/AccordionSummary';
-import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { styled } from "@mui/material/styles";
+import { Box, Accordion } from "@mui/material";
+import AccordionSummary from "@mui/material/AccordionSummary";
+import AccordionDetails from "@mui/material/AccordionDetails";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { DETECTION_ITEMS } from "../constants/keywordRules";
 
 const PII_ICONS = {
-  residentRegistrationNumber: '🆔', // 주민등록번호
-  foreignResidentRegistrationNumber: '🌏', // 외국인 주민등록번호
-  passportNumber: '✈️', // 여권번호
-  driverLicenseNumber: '🚗', // 운전번호
-  phoneNumber: '☎️', // 전화번호
-  mobilePhoneNumber: '📱', // 휴대전화번호
-  bankAccountNumber: '💳', // 계좌번호
-  creditCardNumber: '💳', // 신용카드 번호
-  emailAddress: '📧', // 이메일
-  businessRegistrationNumber: '🏢', // 사업자 등록번호
-};
-
-const PII_NAMES = {
-  residentRegistrationNumber: '주민등록번호',
-  foreignResidentRegistrationNumber: '외국인등록번호',
-  passportNumber: '여권번호',
-  driverLicenseNumber: '운전면허번호',
-  phoneNumber: '전화번호',
-  mobilePhoneNumber: '휴대전화번호',
-  bankAccountNumber: '계좌번호',
-  creditCardNumber: '신용카드번호',
-  emailAddress: '이메일',
-  businessRegistrationNumber: '사업자등록번호',
+  residentRegistrationNumber: "🆔", // 주민등록번호
+  foreignResidentRegistrationNumber: "🌏", // 외국인 주민등록번호
+  passportNumber: "✈️", // 여권번호
+  driverLicenseNumber: "🚗", // 운전번호
+  phoneNumber: "☎️", // 전화번호
+  mobilePhoneNumber: "📱", // 휴대전화번호
+  bankAccountNumber: "💳", // 계좌번호
+  creditCardNumber: "💳", // 신용카드 번호
+  emailAddress: "📧", // 이메일
+  businessRegistrationNumber: "🏢", // 사업자 등록번호
+  keyword: "⭐",
 };
 
 function PIIList({ items }) {
@@ -37,8 +26,8 @@ function PIIList({ items }) {
         <PIIAccordion key={type} defaultExpanded>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
             <PIIHeader>
-              <PIIIcon>{PII_ICONS[type] || '📄'}</PIIIcon>
-              <PIITitle>{PII_NAMES[type] || type}</PIITitle>
+              <PIIIcon>{PII_ICONS[type] || "📄"}</PIIIcon>
+              <PIITitle>{DETECTION_ITEMS[type] || type}</PIITitle>
               <PIICount>{data.count}건</PIICount>
             </PIIHeader>
           </AccordionSummary>
@@ -56,61 +45,61 @@ function PIIList({ items }) {
 }
 
 export const PIIContainer = styled(Box)({
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '12px',
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
 });
 
 export const PIIAccordion = styled(Accordion)({
-  border: '1px solid #e0e0e0',
-  borderRadius: '8px !important',
-  '&:before': {
-    display: 'none',
+  border: "1px solid #e0e0e0",
+  borderRadius: "8px !important",
+  "&:before": {
+    display: "none",
   },
-  boxShadow: 'none',
+  boxShadow: "none",
 });
 
 export const PIIHeader = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  width: '100%',
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  width: "100%",
 });
 
-export const PIIIcon = styled('span')({
-  fontSize: '24px',
+export const PIIIcon = styled("span")({
+  fontSize: "24px",
 });
 
-export const PIITitle = styled('span')({
-  fontSize: '16px',
+export const PIITitle = styled("span")({
+  fontSize: "16px",
   fontWeight: 500,
   flex: 1,
 });
 
-export const PIICount = styled('span')({
-  fontSize: '14px',
-  color: '#1976d2',
+export const PIICount = styled("span")({
+  fontSize: "14px",
+  color: "#1976d2",
   fontWeight: 600,
-  backgroundColor: '#e3f2fd',
-  padding: '4px 12px',
-  borderRadius: '12px',
+  backgroundColor: "#e3f2fd",
+  padding: "4px 12px",
+  borderRadius: "12px",
 });
 
-export const PIIItemList = styled('ul')({
-  listStyle: 'none',
+export const PIIItemList = styled("ul")({
+  listStyle: "none",
   padding: 0,
-  margin: '8px 0 0 0',
+  margin: "8px 0 0 0",
 });
 
-export const PIIItem = styled('li')({
-  padding: '8px 12px',
-  backgroundColor: '#f5f5f5',
-  borderRadius: '6px',
-  marginBottom: '8px',
-  fontFamily: 'monospace',
-  fontSize: '14px',
-  color: '#424242',
-  '&:last-child': {
+export const PIIItem = styled("li")({
+  padding: "8px 12px",
+  backgroundColor: "#f5f5f5",
+  borderRadius: "6px",
+  marginBottom: "8px",
+  fontFamily: "monospace",
+  fontSize: "14px",
+  color: "#424242",
+  "&:last-child": {
     marginBottom: 0,
   },
 });

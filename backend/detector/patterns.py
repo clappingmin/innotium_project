@@ -1,8 +1,6 @@
 import re
 
-class PIIPatterns:
-    """민감정보 정규식 패턴 (개선 버전)"""
-    
+class PIIPatterns:    
     # 주민등록번호: 123456-1234567 (정확히)
     RESIDENT_NUMBER = r'\b\d{6}-[1-4]\d{6}\b'
     
@@ -41,8 +39,8 @@ class PIIPatterns:
             'foreignResidentRegistrationNumber': cls.FOREIGN_NUMBER,
             'passportNumber': cls.PASSPORT,
             'driverLicenseNumber': cls.DRIVER_LICENSE,
-            'phoneNumber': cls.PHONE,
             'mobilePhoneNumber': cls.MOBILE_PHONE,
+            'phoneNumber': cls.PHONE,
             'bankAccountNumber': cls.ACCOUNT,
             'creditCardNumber': cls.CREDIT_CARD,
             'emailAddress': cls.EMAIL,
