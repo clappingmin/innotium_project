@@ -15,6 +15,7 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import EditSquareIcon from "@mui/icons-material/EditSquare";
 import { styled } from "@mui/material/styles";
 import colors from "../styles/colors";
 import {
@@ -116,7 +117,12 @@ function SettingsModal({ open, onClose }) {
           p={1}
         >
           <Box display="flex" alignItems="center" gap={1}>
-            <Typography variant="h6" color={colors.white}>
+            <Typography
+              variant="h6"
+              color={colors.white}
+              sx={{ display: "flex", alignItems: "center", gap: "8px" }}
+            >
+              <EditSquareIcon />
               개인정보 검출설정
             </Typography>
           </Box>
@@ -237,11 +243,11 @@ function SettingsModal({ open, onClose }) {
       <Divider />
 
       <DialogActions sx={{ p: 2 }}>
-        <Button onClick={onClose} variant="outlined">
-          닫기
-        </Button>
         <Button onClick={handleSave} variant="contained">
           저장
+        </Button>
+        <Button onClick={onClose} variant="outlined">
+          닫기
         </Button>
       </DialogActions>
     </StyledDialog>
