@@ -1,4 +1,4 @@
-import { DEFAULT_DETECTION_SETTINGS } from '../constants/keywordRules';
+import { DEFAULT_DETECTION_SETTINGS } from "../constants/keywordRules";
 
 /**
  *
@@ -6,20 +6,23 @@ import { DEFAULT_DETECTION_SETTINGS } from '../constants/keywordRules';
  * @param {*} settings
  * @returns
  */
-export async function analyzeDocument(file, settings = DEFAULT_DETECTION_SETTINGS) {
-
-
+export async function analyzeDocument(
+  file,
+  settings = DEFAULT_DETECTION_SETTINGS,
+  enablePdfOcr = false,
+) {
   const formData = new FormData();
-  formData.append('file', file);
-  formData.append('settings', JSON.stringify(settings));
+  formData.append("file", file);
+  formData.append("settings", JSON.stringify(settings));
+  formData.append("enablePdfOcr", JSON.stringify(enablePdfOcr));
 
-  const res = await fetch('http://localhost:5000/api/analyze', {
-    method: 'POST',
+  const res = await fetch("http://localhost:5000/api/analyze", {
+    method: "POST",
     body: formData,
   });
 
   if (!res.ok) {
-    throw new Error('문서 분석 실패');
+    throw new Error("문서 분석 실패");
   }
 
   return res.json();

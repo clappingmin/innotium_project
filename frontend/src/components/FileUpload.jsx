@@ -1,12 +1,14 @@
 import { styled } from "@mui/material/styles";
-import { Box, Button } from "@mui/material";
+import { Box, Button, Checkbox, FormControlLabel } from "@mui/material";
 import { useState } from "react";
 import CircularProgress from "@mui/material/CircularProgress";
+import colors from "../styles/colors";
 
 function FileUpload({ onAnalyze, isAnalyzing }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [enablePdfOcr, setEnablePdfOcr] = useState(false);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -47,7 +49,7 @@ function FileUpload({ onAnalyze, isAnalyzing }) {
 
   const handleAnalyze = () => {
     if (file) {
-      onAnalyze(file);
+      onAnalyze(file, enablePdfOcr);
     }
   };
 
@@ -85,7 +87,6 @@ function FileUpload({ onAnalyze, isAnalyzing }) {
           <>
             {preview && <PreviewImage src={preview} alt="미리보기" />}
             <FileName>📄 {file.name}</FileName>
-            {/* {file.type === "application/pdf" && <></>} */}
             <div>
               <UploadButton variant="outlined" style={{ marginRight: "8px" }}>
                 파일 변경
@@ -112,6 +113,24 @@ function FileUpload({ onAnalyze, isAnalyzing }) {
                 )}
               </AnalyzeButton>
             </div>
+            {file.type === "application/pdf" && (
+              <StopClick
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+              >
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={enablePdfOcr}
+                      onChange={(e) => setEnablePdfOcr(e.target.checked)}
+                    />
+                  }
+                  label="PDF 내 이미지 텍스트까지 포함하여 분석"
+                  sx={{ minWidth: 180, color: colors.text }}
+                />
+              </StopClick>
+            )}
           </>
         )}
       </DropZone>
@@ -177,6 +196,11 @@ export const AnalyzeButton = styled(Button)({
   fontSize: "16px",
   textTransform: "none",
   fontWeight: 600,
+});
+
+const StopClick = styled("div")({
+  display: "inline-flex",
+  alignItems: "center",
 });
 
 export default FileUpload;
