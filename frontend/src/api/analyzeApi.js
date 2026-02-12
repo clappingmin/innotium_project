@@ -14,7 +14,7 @@ export async function analyzeDocument(
   const formData = new FormData();
   formData.append("file", file);
   formData.append("settings", JSON.stringify(settings));
-  formData.append("enablePdfOcr", JSON.stringify(enablePdfOcr));
+  formData.append("enablePdfOcr", enablePdfOcr);
 
   const res = await fetch("http://localhost:5000/api/analyze", {
     method: "POST",
