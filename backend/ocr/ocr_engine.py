@@ -1,35 +1,60 @@
 import easyocr
-import cv2
-import numpy as np
+import fitz  # pymupdf
 from PIL import Image
 
 if not hasattr(Image, "ANTIALIAS"):
     Image.ANTIALIAS = Image.Resampling.LANCZOS
 
-
 class OCREngine:
-    """EasyOCR 엔진"""
-    
     def __init__(self):
-        print("🔧 EasyOCR 초기화 중... (처음 실행 시 모델 다운로드)")
-        # 한글 + 영어 지원
+        print("🔧 EasyOCR 초기화 중...")
         self.reader = easyocr.Reader(['ko', 'en'], gpu=False)
         print("✅ EasyOCR 초기화 완료!")
     
-    def extract_text(self, image_path):
-        """이미지에서 텍스트 추출"""
+    def extract_text(self, file_path):
+        """파일에서 텍스트 추출"""
+        
+        # PDF면 텍스트 직접 추출
+        if file_path.lower().endswith('.pdf'):
+            return self._extract_from_pdf(file_path)
+        
+        # 이미지면 OCR
+        else:
+            return self._extract_from_image(file_path)
+    
+    def _extract_from_pdf(self, pdf_path):
+        """PDF에서 텍스트 직접 추출 (OCR 불필요!)"""
         try:
-            # 이미지 읽기
-            result = self.reader.readtext(image_path)
+            doc = fitz.open(pdf_path)
+            all_texts = []
             
-            # 텍스트만 추출
-            texts = [text[1] for text in result]
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                text = page.get_text()  # 텍스트 직접 추출!
+                all_texts.append(text)
             
-            # 한 줄로 합치기
-            full_text = ' '.join(texts)
+            doc.close()
             
+            full_text = ' '.join(all_texts)
+            print(f"✅ PDF 텍스트 추출 완료: {full_text[:100]}...")
             return full_text
         
         except Exception as e:
-            print(f"OCR 에러: {e}")
+            print(f"❌ PDF 텍스트 추출 에러: {e}")
+            return ""
+        
+    def _extract_from_image(self, image_path):
+        """이미지에서 텍스트 추출 (OCR)"""
+        try:
+            result = self.reader.readtext(
+                image_path,
+                rotation_info=[90, 180, 270]
+            )
+            texts = [text[1] for text in result]
+            full_text = ' '.join(texts)
+            print(f"✅ 이미지 텍스트 추출 완료: {full_text[:100]}...")
+            return full_text
+        
+        except Exception as e:
+            print(f"❌ 이미지 OCR 에러: {e}")
             return ""

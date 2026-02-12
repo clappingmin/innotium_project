@@ -38,6 +38,7 @@ def health_check():
 @app.route('/api/analyze', methods=['POST'])
 def analyze_document():
     """문서 분석 API"""
+    filepath = None
     try:
         # 1. 파일 체크
         if 'file' not in request.files:
@@ -51,7 +52,7 @@ def analyze_document():
         if not allowed_file(file.filename):
             return jsonify({'error': '지원하지 않는 파일 형식입니다'}), 400
         
-        # 2. 설정 받기 (localStorage에서 보낸 설정)
+        # 2. 설정 받기
         settings = request.form.get('settings')
         if settings:
             import json
@@ -67,17 +68,13 @@ def analyze_document():
         # 4. OCR 실행
         print(f"📄 OCR 시작: {filename}")
         extracted_text = ocr_engine.extract_text(filepath)
-
         print(f"✅ 추출된 텍스트: {extracted_text[:100]}...")
         
         # 5. 민감정보 탐지
         print("🔍 민감정보 탐지 중...")
         detection_result = pii_detector.detect(extracted_text, settings)
         
-        # 6. 파일 삭제 (분석 후)
-        os.remove(filepath)
-        
-        # 7. 결과 반환
+        # 6. 결과 반환
         return jsonify({
             'success': True,
             'filename': filename,
@@ -91,7 +88,14 @@ def analyze_document():
     except Exception as e:
         print(f"❌ 에러: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
+    
+    finally:
+        # 성공/실패 상관없이 마지막에 파일 삭제
+        if filepath and os.path.exists(filepath):
+            try:
+                os.remove(filepath)
+            except Exception as e:
+                print(f"⚠️ 파일 삭제 실패: {e}")
 
 if __name__ == '__main__':
     print("🚀 Flask 서버 시작...")

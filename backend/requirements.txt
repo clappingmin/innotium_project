@@ -4,3 +4,4 @@ easyocr==1.7.0
 Pillow==12.1.0
 opencv-python-headless==4.13.0.92
 python-dotenv==1.0.0
+PyMuPDF
