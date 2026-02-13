@@ -101,9 +101,12 @@ function SettingsModal({ open, onClose }) {
     onClose();
   };
 
+  // 키워드 삭제
   const removeKeyword = (index) => {
+    const i = Number(index); // 문자열 -> 숫자 변환
     setSettings({
-      ...keyword,
+      ...settings,
+      keyword: settings.keyword.filter((_, idx) => idx !== i),
     });
   };
 
@@ -141,7 +144,8 @@ function SettingsModal({ open, onClose }) {
 
         {Object.entries(settings).map(
           ([key, value]) =>
-            DETECTION_ITEMS[key] && (
+            DETECTION_ITEMS[key] &&
+            key !== "keyword" && (
               <SettingRow key={key}>
                 <FormControlLabel
                   control={
@@ -231,7 +235,7 @@ function SettingsModal({ open, onClose }) {
               <IconButton
                 size="small"
                 sx={{ border: "rgba(0,0,0,0.15)" }}
-                onClick={removeKeyword}
+                onClick={() => removeKeyword(index)}
               >
                 <CloseIcon />
               </IconButton>
