@@ -16,15 +16,15 @@ function FileUpload({ onAnalyze, isAnalyzing }) {
   };
 
   const handleFile = (selectedFile) => {
-    if (selectedFile) {
-      setFile(selectedFile);
-      // 이미지 미리보기
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(selectedFile);
-    }
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+
+    // 기존 URL 있으면 해제 (메모리 누수 방지)
+    if (preview) URL.revokeObjectURL(preview);
+    const url = URL.createObjectURL(selectedFile);
+
+    setPreview(url);
   };
 
   const handleDragOver = (e) => {
@@ -85,7 +85,17 @@ function FileUpload({ onAnalyze, isAnalyzing }) {
           </>
         ) : (
           <>
-            {preview && <PreviewImage src={preview} alt="미리보기" />}
+            {/* 이미지면 img */}
+            {preview && file?.type?.startsWith("image/") && (
+              <PreviewImage src={preview} alt="미리보기" />
+            )}
+
+            {/* PDF면 iframe */}
+            {preview &&
+              (file?.type === "application/pdf" ||
+                file?.name?.toLowerCase().endsWith(".pdf")) && (
+                <PdfPreview src={preview} title="PDF 미리보기" />
+              )}
             <FileName>📄 {file.name}</FileName>
             <div>
               <UploadButton variant="outlined" style={{ marginRight: "8px" }}>
@@ -181,6 +191,14 @@ export const PreviewImage = styled("img")({
   borderRadius: "8px",
   marginTop: "16px",
   boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+});
+
+export const PdfPreview = styled("iframe")({
+  width: "100%",
+  height: "300px",
+  border: "1px solid #e0e0e0",
+  borderRadius: "8px",
+  marginTop: "16px",
 });
 
 export const FileName = styled("p")({
