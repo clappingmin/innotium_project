@@ -16,9 +16,7 @@ export async function analyzeDocument(
   formData.append("settings", JSON.stringify(settings));
   formData.append("enablePdfOcr", enablePdfOcr);
 
-  const url = import.meta.env.VITE_API_URL;
-
-  const res = await fetch(`${url}/api/analyze`, {
+  const res = await fetch(`/api/analyze`, {
     method: "POST",
     body: formData,
   });
