@@ -51,4 +51,9 @@ cd /home/ec2-user/innotium_project_backend
 sourece venv/bin/activate
 python app.py
 
+# 터미널 꺼져도 계속 실행
+nohup python app.py > app.log 2>&1 &
+
+# 서버 종료
+pkill -f "python app.py"
 ```
