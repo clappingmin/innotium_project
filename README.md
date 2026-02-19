@@ -43,3 +43,12 @@ npm install
 
 npm run dev
 ```
+
+### 3. AWS 배포한 상황에서
+
+```
+cd /home/ec2-user/innotium_project_backend
+sourece venv/bin/activate
+python app.py
+
+```
