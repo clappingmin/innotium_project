@@ -164,47 +164,34 @@ class PIIDetector:
             return False
     
     def _detect_keywords(self, text, keywords):
-        """
-        키워드 검출
-        
-        Args:
-            text: OCR 텍스트
-            keywords: 검색할 키워드 리스트
-                [{'value': '이노티움', 'count': 0}, {'value': '박수민', 'count': 0}]
-        
-        Returns:
-            검출된 키워드 리스트
-        """
         found = []
         
         if not isinstance(keywords, list):
             return found
         
         for keyword_obj in keywords:
-            # 딕셔너리 형태인 경우
             if isinstance(keyword_obj, dict):
                 keyword = keyword_obj.get('value', '')
                 max_count = keyword_obj.get('count', 0)
                 
-                # 문자열이면 정수로 변환
                 if isinstance(max_count, str):
                     try:
                         max_count = int(max_count)
                     except:
                         max_count = 0
                 
-                # 키워드가 텍스트에 있는지 확인
                 if keyword and keyword in text:
-                    # count가 0이면 무제한, 아니면 제한
-                    if max_count == 0 or len(found) < max_count:
+                    # ✅ 전체 found 길이가 아닌, 해당 키워드가 이미 found에 몇 개 있는지 체크
+                    keyword_count = found.count(keyword)
+                    if max_count == 0 or keyword_count < max_count:
                         found.append(keyword)
             
-            # 문자열 형태인 경우 (하위 호환)
             elif isinstance(keyword_obj, str) and keyword_obj and keyword_obj in text:
                 found.append(keyword_obj)
         
         return found
-    
+
+
     def _remove_duplicates(self, candidates):
         """
         중복 제거: 같은 번호가 여러 타입에 걸릴 때 가장 적합한 것만 선택
